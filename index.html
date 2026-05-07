@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>DBSC PoC</h1>
+<button onclick="login()">Login</button>
+<button onclick="testProtected()">Test Protected</button>
+<button onclick="refresh()">Refresh Session</button>
+<pre id="output"></pre>
+<script>
+const output = document.getElementById('output');
+
+async function login() {
+  const res = await fetch('/login', {method: 'POST', credentials: 'include'});
+  const data = await res.json();
+  output.textContent = 'Login response: ' + JSON.stringify(data, null, 2) + '\n\n';
+  
+  // Show response headers
+  const headersObj = {};
+  res.headers.forEach((value, key) => {
+    headersObj[key] = value;
+  });
+  output.textContent += 'Response headers: ' + JSON.stringify(headersObj, null, 2);
+}
+
+async function testProtected() {
+  const res = await fetch('/api/protected', {credentials: 'include'});
+  const data = await res.json();
+  output.textContent = 'Protected response: ' + JSON.stringify(data, null, 2);
+}
+
+async function refresh() {
+  const res = await fetch('/StartSession', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({})
+  });
+  const data = await res.json();
+  output.textContent = 'StartSession response: ' + JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>
