@@ -1,4 +1,4 @@
-import { DeviceBoundSession } from "./DeviceBoundSession";
+import { DeviceBoundSession } from './DeviceBoundSession.js';
 
 /**
  * TODO: persistence

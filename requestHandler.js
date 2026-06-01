@@ -1,13 +1,11 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { cookie, endpoints } from './config'
+/** @typedef {import('fastify').FastifyRequest} FastifyRequest */
+/** @typedef {import('fastify').FastifyReply} FastifyReply */
 import { DeviceBoundSessionCollection } from './DeviceBoundSessionCollection.js';
 import { DeviceBoundSession } from './DeviceBoundSession.js';
 import { generateSessionId } from './helpers.js';
 import { mapReply, mapRequest } from './DbscHttp.js';
 import { DbscStateMachine } from './DbscStateMachine.js';
-
-// /** @typedef {import(fastify).FastifyRequest} FastifyRequest */
-// /** @typedef {import(fastify).FastifyReply} FastifyReply */
+import { cookie } from './config.js';
 
 /**
  * @param {FastifyRequest} request 
@@ -20,7 +18,7 @@ async function handleRequest(request, reply, sessions, stateMachine) {
   const headerId = request.headers['sec-secure-session-id'];
 
   let id = cookieId || headerId;
-  let session = sessions.get(id);
+  let session = await sessions.get(id);
 
   if (!session) {
     id = generateSessionId(); 
@@ -31,7 +29,7 @@ async function handleRequest(request, reply, sessions, stateMachine) {
   const input = await mapRequest(request, session);
 
   const replyType = stateMachine.transition(input);
-
+  
   mapReply(replyType, reply, session);
 }
 

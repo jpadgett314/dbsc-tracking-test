@@ -2,9 +2,10 @@ import fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import fs from 'fs';
 import path from 'path';
-import { handleRequest } from './requestHandler';
-import { DeviceBoundSessionCollection } from './DeviceBoundSessionCollection';
-import { endpoints } from './config';
+import { handleRequest } from './requestHandler.js';
+import { DeviceBoundSessionCollection } from './DeviceBoundSessionCollection.js';
+import { endpoints } from './config.js';
+import { DbscStateMachine } from './DbscStateMachine.js';
 
 const app = fastify(
   { 
@@ -18,7 +19,8 @@ const app = fastify(
 
 const sessions = new DeviceBoundSessionCollection();
 
-// Register cookie plugin
+const stateMachine = new DbscStateMachine();
+
 await app.register(cookie);
 
 // Enable CORS for testing
@@ -32,27 +34,25 @@ app.addHook('onRequest', async (request, reply) => {
   }
 });
 
-// Serve the HTML frontend
 app.get('/', async (request, reply) => {
   reply.type('text/html').send(fs.readFileSync(path.join(import.meta.dirname, 'index.html')));
 });
 
-app.post(endpoints.auth, (req, rep) => handleRequest(req, rep, sessions));
+app.post(endpoints.auth, (req, rep) => handleRequest(req, rep, sessions, stateMachine));
 
-app.post(endpoints.register, (req, rep) => handleRequest(req, rep, sessions));
+app.post(endpoints.register, (req, rep) => handleRequest(req, rep, sessions, stateMachine));
  
-app.post(endpoints.refresh, (req, rep) => handleRequest(req, rep, sessions));
+app.post(endpoints.refresh, (req, rep) => handleRequest(req, rep, sessions, stateMachine));
 
-// Protected endpoint to test authentication
 app.get('/api/protected', async (request, reply) => {
   const sessionId = request.cookies.auth_cookie;
-  if (!sessionId || !sessions.has(sessionId)) {
+  const session = await sessions.get(sessionId);
+  if (!sessionId || !session) {
     return reply.code(401).send({ error: 'Unauthorized' });
   }
   reply.send({ message: 'Access granted', sessionId });
 });
 
-// Start server
 const start = async () => {
   try {
     await app.listen({ port: 4430 });

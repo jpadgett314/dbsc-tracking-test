@@ -30,8 +30,11 @@ request outputs
 - cookie
 */
 
-import { FastifyReply, FastifyRequest } from 'fastify'
+/** @typedef {import('fastify').FastifyRequest} FastifyRequest */
+/** @typedef {import('fastify').FastifyReply} FastifyReply */
+import { cookie, endpoints } from './config.js';
 import { DeviceBoundSession } from './DeviceBoundSession.js';
+import { generateChallenge } from './helpers.js';
 
 /**
  * @param {FastifyRequest} request
@@ -52,7 +55,7 @@ async function mapRequest(request, session) {
   };
 
   const jwt = request.headers['secure-session-response'];
-  const mapProof = () => {
+  const mapProof = async () => {
     if (!jwt) {
       return 'not-present';
     } else if (await session.verify(jwt)) {
@@ -82,7 +85,7 @@ async function mapRequest(request, session) {
     action: mapAction(),
     session_id: mapCookie(),
     device_bound_session_id: mapSessionId(),
-    device_bound_proof: mapProof(),
+    device_bound_proof: await mapProof(),
   };
   
   return state_machine_input;
@@ -95,13 +98,13 @@ async function mapRequest(request, session) {
  */
 function mapReply(reply_type, reply, session) {
   const mapRegistration = () => {
-    session.challenge = 'hi'; // TODO;
-
+    session.challenge = generateChallenge();
+    
     reply.header('Secure-Session-Registration', 
       [
         '(ES256 RS256)',
         'path="/StartSession"',
-        `origin="https://${request.headers.host}`,
+        `origin="https://${reply.request.headers.host}"`,
         `challenge="${session.challenge}"`
       ].join('; ')
     );
@@ -115,16 +118,26 @@ function mapReply(reply_type, reply, session) {
       }
     );
 
-    reply.send();
+    reply.send({ message: 'Logged in', sessionId: session.sessionId });
+    //reply.send();
   };
 
   const mapConfig = () => {
+    reply.setCookie(cookie.name, session.sessionId, 
+      {
+        maxAge: cookie.duration.temp,
+        secure: true,
+        sameSite: 'lax',
+        path: '/'
+      }
+    );
+
     reply.send(
       {
         session_identifier: session.sessionId,
         refresh_url: endpoints.refresh,
         scope: {
-          origin: origin,
+          origin: `https://${reply.request.headers.host}`,
           include_site: false,
           scope_specification: []
         },
@@ -140,27 +153,18 @@ function mapReply(reply_type, reply, session) {
   }
 
   const mapChallenge = () => {
-    session.challenge = 'hi'; // TODO;
+    session.challenge = generateChallenge();
 
     reply.header('Secure-Session-Challenge', 
       [
-        `"${challenge}"`,
-        `id="${sessionId}"`,
+        `"${session.challenge}"`,
+        `id="${session.sessionId}"`,
       ].join('; ')
-    );
-
-    reply.setCookie(cookie.name, session.sessionId, 
-      {
-        maxAge: cookie.duration.temp,
-        secure: true,
-        sameSite: 'lax',
-        path: '/'
-      }
     );
 
     reply.code(403).send();
   }
-  
+
   switch (reply_type) {
     case 'send-registration-info':
       return mapRegistration();
