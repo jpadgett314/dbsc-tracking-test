@@ -1,5 +1,5 @@
-import { DeviceBoundSession } from './DeviceBoundSession.js';
-import { generateChallenge } from './helpers.js';
+import { Session } from '../../Session.js';
+import { generateChallenge } from '../../util.js';
 
 /** @typedef {import('fastify').FastifyReply} FastifyReply */
 
@@ -15,7 +15,7 @@ function replyWithSetup(reply, session, config) {
     ].join('; ')
   );
 
-  reply.setCookie(config.cookie.name, session.sessionId, 
+  reply.setCookie(config.cookie.name, session.id, 
     {
       maxAge: config.cookie.duration.long,
       secure: true,
@@ -24,12 +24,12 @@ function replyWithSetup(reply, session, config) {
     }
   );
 
-  reply.send({ message: 'Logged in', sessionId: session.sessionId });
+  reply.send({ message: 'Logged in', sessionId: session.id });
   //reply.send();
 }
 
 function replyWithConfig(reply, session, config) {
-  reply.setCookie(config.cookie.name, session.sessionId, 
+  reply.setCookie(config.cookie.name, session.id, 
     {
       maxAge: config.cookie.duration.short,
       secure: true,
@@ -40,7 +40,7 @@ function replyWithConfig(reply, session, config) {
 
   reply.send(
     {
-      session_identifier: session.sessionId,
+      session_identifier: session.id,
       refresh_url: config.endpoints.refresh,
       scope: {
         origin: `https://${reply.request.headers.host}`,
@@ -64,7 +64,7 @@ function replyWithChallenge(reply, session) {
   reply.header('Secure-Session-Challenge', 
     [
       `"${session.challenge}"`,
-      `id="${session.sessionId}"`,
+      `id="${session.id}"`,
     ].join('; ')
   );
 
@@ -74,17 +74,19 @@ function replyWithChallenge(reply, session) {
 /**
  * @param {'send-registration-info' | 'send-config' | 'send-challenge'} replyType
  * @param {FastifyReply} reply 
- * @param {DeviceBoundSession} session 
+ * @param {Session} session 
  */
 function composeReply(replyType, reply, session, config) {
   switch (replyType) {
     case 'send-registration-info':
-      return replyWithSetup();
+      return replyWithSetup(reply, session, config);
     case 'send-config':
-      return replyWithConfig();
+      return replyWithConfig(reply, session, config);
     case 'send-challenge':
-      return replyWithChallenge();
+      return replyWithChallenge(reply, session);
     default:
+      console.error(`config: `, JSON.stringify(config));
+      console.error(`session: `, session);
       console.error(`Invalid reply type: ${replyType}`);
   }
 }

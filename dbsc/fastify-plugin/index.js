@@ -1,5 +1,5 @@
-import fastifyPlugin from "fastify-plugin";
-import { DbscService } from "./DbscService";
+import fastifyPlugin from 'fastify-plugin';
+import { DbscService } from './DbscService.js';
 
 const dbscPlugin = fastifyPlugin(
   (fastify, options) => {

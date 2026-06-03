@@ -42,6 +42,15 @@ class SessionStateMachine {
       }
     }
 
+    // Error case - leave debugging info
+    console.error(
+      `mode: ${this.state}\n`,
+      `input.action: ${input.action}\n`,
+      `input.session_id: ${input.session_id}\n`,
+      `input.device_bound_session_id: ${input.device_bound_session_id}\n`,
+      `input.device_bound_proof: ${input.device_bound_proof}\n`,
+    );
+
     this.state = 'inactive;'
     return 'error';
   }

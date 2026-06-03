@@ -1,10 +1,18 @@
 import { decodeProtectedHeader, importJWK, jwtVerify } from 'jose';
 
 class SessionVerifier {
+  /**
+   * @param {CryptoKey | null} publicKey 
+   */
   constructor(publicKey) {
     this.publicKey = publicKey;
   }
 
+  /**
+   * @param {object} jwt 
+   * @param {string} challenge 
+   * @returns 
+   */
   async verify(jwt, challenge) {
     let header;
     
@@ -28,6 +36,16 @@ class SessionVerifier {
     if (!jti || !challenge) {
       return false;
     } 
+
+    if (challenge !== jti) {
+      console.error(
+        "--- Challenge Verification Failed ---\n"
+        `publickey: ${this.publicKey}\n`,
+        `challenge: ${challenge}\n`,
+        `jti: `, jti,
+        `jwt: `, jwt,
+      )
+    }
 
     return challenge == jti;
   }

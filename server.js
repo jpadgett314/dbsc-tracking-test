@@ -36,8 +36,9 @@ app.get('/', async (request, reply) => {
 
 app.get('/api/protected', async (request, reply) => {
   const sessionId = request.cookies.auth_cookie;
-  const session = await sessions.get(sessionId);
-  if (!sessionId || !session) {
+  // const session = await sessions.get(sessionId);
+  // if (!sessionId || !session) {
+  if (!sessionId) {
     return reply.code(401).send({ error: 'Unauthorized' });
   }
   reply.send({ message: 'Access granted', sessionId });
