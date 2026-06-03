@@ -1,13 +1,11 @@
 import { decodeProtectedHeader, importJWK, jwtVerify } from 'jose';
 
-class DeviceBoundSession {
-  constructor(sessionId, challenge, publicKey) {
-    this.sessionId = sessionId;
-    this.challenge = challenge;
+class SessionVerifier {
+  constructor(publicKey) {
     this.publicKey = publicKey;
   }
 
-  async verify(jwt) {
+  async verify(jwt, challenge) {
     let header;
     
     try {
@@ -27,12 +25,12 @@ class DeviceBoundSession {
     const transformed = await jwtVerify(jwt, this.publicKey);
     const jti = transformed?.payload?.jti;
 
-    if (!jti || !this.challenge) {
+    if (!jti || !challenge) {
       return false;
     } 
 
-    return this.challenge == jti;
+    return challenge == jti;
   }
 }
 
-export { DeviceBoundSession };
+export { SessionVerifier };

@@ -1,11 +1,9 @@
 import fastify from 'fastify';
 import cookie from '@fastify/cookie';
+import config from './config.json' with { type: 'json' };
 import fs from 'fs';
 import path from 'path';
-import { handleRequest } from './requestHandler.js';
-import { DeviceBoundSessionCollection } from './DeviceBoundSessionCollection.js';
-import { endpoints } from './config.js';
-import { DbscStateMachine } from './DbscStateMachine.js';
+import { dbscPlugin } from './dbsc/fastify-plugin/index.js';
 
 const app = fastify(
   { 
@@ -17,11 +15,9 @@ const app = fastify(
   }
 );
 
-const sessions = new DeviceBoundSessionCollection();
-
-const stateMachine = new DbscStateMachine();
-
 await app.register(cookie);
+
+await app.register(dbscPlugin, config);
 
 // Enable CORS for testing
 app.addHook('onRequest', async (request, reply) => {
@@ -37,12 +33,6 @@ app.addHook('onRequest', async (request, reply) => {
 app.get('/', async (request, reply) => {
   reply.type('text/html').send(fs.readFileSync(path.join(import.meta.dirname, 'index.html')));
 });
-
-app.post(endpoints.auth, (req, rep) => handleRequest(req, rep, sessions, stateMachine));
-
-app.post(endpoints.register, (req, rep) => handleRequest(req, rep, sessions, stateMachine));
- 
-app.post(endpoints.refresh, (req, rep) => handleRequest(req, rep, sessions, stateMachine));
 
 app.get('/api/protected', async (request, reply) => {
   const sessionId = request.cookies.auth_cookie;

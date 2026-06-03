@@ -1,16 +1,16 @@
-import { DeviceBoundSession } from './DeviceBoundSession.js';
+import { Session } from './Session.js';
 
 /**
  * TODO: persistence
  */
-class DeviceBoundSessionCollection {
+class SessionCollection {
   constructor() {
     this.collection = new Map();
   }
 
   /**
    * @param {string} id 
-   * @returns {DeviceBoundSession | null}
+   * @returns {Session | null}
    */
   async get(id) {
     return this.collection.get(id);
@@ -19,7 +19,7 @@ class DeviceBoundSessionCollection {
   /**
    * 
    * @param {string} id 
-   * @param {DeviceBoundSession} session 
+   * @param {Session} session 
    * @returns 
    */
   async set(id, session) {
@@ -27,4 +27,4 @@ class DeviceBoundSessionCollection {
   }
 }
 
-export { DeviceBoundSessionCollection };
+export { SessionCollection };

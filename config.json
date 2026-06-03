@@ -1,0 +1,14 @@
+{
+  "endpoints": {
+    "auth": "/login",
+    "refresh": "/RefreshEndpoint",
+    "register": "/StartSession"
+  },
+  "cookie": {
+    "name": "auth_cookie",
+    "duration": {
+      "long": 2592000,
+      "short": 600
+    }
+  }
+}

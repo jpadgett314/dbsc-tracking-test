@@ -1,7 +1,8 @@
 /**
- * Device-Bound Session Credentials session mode state machine (transducer type)
+ * Device-Bound Session Credentials (DBSC) session mode state machine (transducer type).
+ * The core logic of DBSC is encoded as a sort of decision tree.
  */
-class DbscStateMachine {
+class SessionStateMachine {
   constructor() {
     /** @type {'inactive' | 'pending' | 'bound'} */ 
     this.state = 'inactive';
@@ -46,4 +47,4 @@ class DbscStateMachine {
   }
 }
 
-export { DbscStateMachine };
+export { SessionStateMachine };
