@@ -34,6 +34,18 @@ app.get('/', async (request, reply) => {
   reply.type('text/html').send(fs.readFileSync(path.join(import.meta.dirname, 'index.html')));
 });
 
+app.post(config.endpoints.auth, (request, reply) => { 
+  reply.send({ message: 'Logged in', sessionId: session.id });
+});
+app.post(config.endpoints.register, (request, reply) => { 
+  console.log('auth!');
+  reply.send();
+});
+app.post(config.endpoints.refresh, (request, reply) => { 
+  console.log('auth!');
+  reply.send();
+});
+
 app.get('/api/protected', async (request, reply) => {
   const sessionId = request.cookies.auth_cookie;
   // const session = await sessions.get(sessionId);

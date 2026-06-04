@@ -26,7 +26,7 @@ class Session {
    * Construct default (unbound) Device-Bound Session
    * @returns {Session}
    */
-  static fromDefaults() {
+  static generate() {
     const sessionId = generateSessionId();
     return new Session(
       sessionId,
