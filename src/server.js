@@ -35,14 +35,12 @@ app.get('/', async (request, reply) => {
 });
 
 app.post(config.endpoints.auth, (request, reply) => { 
-  reply.send({ message: 'Logged in', sessionId: session.id });
+  reply.send({ message: 'Logged in', sessionId: request.session.id });
 });
 app.post(config.endpoints.register, (request, reply) => { 
-  console.log('auth!');
   reply.send();
 });
 app.post(config.endpoints.refresh, (request, reply) => { 
-  console.log('auth!');
   reply.send();
 });
 

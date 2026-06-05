@@ -15,7 +15,7 @@ class SessionStateMachine {
    * @param {'valid' | 'invalid' | 'not-present'} input.device_bound_proof 
    * @returns {'send-registration-info' | 'send-config' | 'send-challenge'}
    */
-  transition(input) {
+  transition(input) {   
     if (this.state == 'inactive') {
       if (input.action == 'auth') {
         this.state = 'pending';
@@ -42,7 +42,7 @@ class SessionStateMachine {
       }
     }
 
-    // Error case - leave debugging info
+    // Any valid input+state should produce an early return
     console.error(
       `mode: ${this.state}\n`,
       `input.action: ${input.action}\n`,

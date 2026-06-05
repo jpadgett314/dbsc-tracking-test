@@ -1,6 +1,7 @@
 import { locks } from 'web-locks';
 import { Session } from './Session.js';
 import { SessionCollection } from './SessionCollection.js';
+import { generateChallenge } from './util.js';
 
 class DBSCService {
   /**
@@ -10,28 +11,43 @@ class DBSCService {
     this.sessions = new SessionCollection();
     this.config = config;
   }
-  
+
   /**
-   * Central handler for auth, register and refresh
    * @param {DBSCInputs} inputs 
    */
-  dispatchHandler(inputs) {
-    /**@type {Session | null} */
+  async resolveSession(inputs) {
+    /** @type {Session | null} */
     let session = null;
 
     await locks.request('session-resolution', async () => {
       session = await this.sessions.get(inputs.sessionId || inputs.secureSessionId);
       if (!session) {
         session = Session.generate();
-        this.sessions.set(session.id, session);
+        await this.sessions.set(session.id, session);
       }
     });
+
+    return session;
+  }
+  
+  /**
+   * Central handler for auth, register and refresh
+   * @param {DBSCInputs} inputs 
+   * @param {Session} session
+   */
+  async dispatchHandler(inputs, session=null) {
+    /** @type {DBSCOutputs} */
+    let outputs = null;
+
+    session ??= this.resolveSession(inputs);
 
     await locks.request(session.id, async () => {
       const flags = await handleInput(inputs, session, this.config);
       const outputType = session.updateMode(flags);
-      return handleOutput(outputType, session, this.config);
+      outputs = handleOutput(outputType, session, this.config);
     });
+
+    return outputs;
   }
 
 }
@@ -86,8 +102,7 @@ function handleOutput(outputType, session, config) {
           `Path=/`
         ].join('; '),
     }
-  }
-  else if (outputType == 'send-config') {
+  } else if (outputType == 'send-config') {
     return {
       setCookie: 
         [
@@ -115,8 +130,7 @@ function handleOutput(outputType, session, config) {
           ]
         },
     }
-  }
-  else if (outputType == 'send-challenge') {
+  } else if (outputType == 'send-challenge') {
     session.challenge = generateChallenge();
     return {
       status: 403,
@@ -126,6 +140,8 @@ function handleOutput(outputType, session, config) {
           `id="${session.id}"`,
         ].join('; '),
     }
+  } else {
+    console.error(`Invalid output type: ${outputType}`);
   }
 }
 

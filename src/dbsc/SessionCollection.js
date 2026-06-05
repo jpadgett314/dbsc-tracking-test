@@ -20,10 +20,9 @@ class SessionCollection {
    * 
    * @param {string} id 
    * @param {Session} session 
-   * @returns 
    */
   async set(id, session) {
-    return this.collection.set(id, session);
+    this.collection.set(id, session);
   }
 }
 

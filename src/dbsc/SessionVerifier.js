@@ -14,8 +14,7 @@ class SessionVerifier {
    * @returns 
    */
   async verify(jwt, challenge) {
-    let header;
-    
+    let header;  
     try {
       header = decodeProtectedHeader(jwt);
     } catch {
@@ -26,26 +25,35 @@ class SessionVerifier {
       this.publicKey = await importJWK(header.jwk, header.alg);
     }
 
-    if (!this.publicKey) {
-      return false;
+    let transformed;
+
+    try {
+      transformed = await jwtVerify(jwt, this.publicKey);
+    } catch (e) {
+      console.error(
+        "--- Challenge Verification Error ---\n",
+        `publickey: ${this.publicKey}\n`,
+        `challenge: ${challenge}\n`,
+        `jwt: `, jwt,
+      );
+      throw e;
     }
 
-    const transformed = await jwtVerify(jwt, this.publicKey);
     const jti = transformed?.payload?.jti;
 
-    if (!jti || !challenge) {
-      return false;
-    } 
-
-    if (challenge !== jti) {
+    if (!jti || !challenge || challenge !== jti) {
       console.error(
-        "--- Challenge Verification Failed ---\n"
+        "--- Challenge Verification Failed ---\n",
         `publickey: ${this.publicKey}\n`,
         `challenge: ${challenge}\n`,
         `jti: `, jti,
         `jwt: `, jwt,
       )
     }
+
+    if (!jti || !challenge) {
+      return false;
+    } 
 
     return challenge == jti;
   }
