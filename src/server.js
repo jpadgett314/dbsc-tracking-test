@@ -8,8 +8,8 @@ import { dbsc } from './dbsc/fastify-plugin/index.js';
 const app = fastify(
   { 
     https: {
-      key: fs.readFileSync('localhost+2-key.pem'),
-      cert: fs.readFileSync('localhost+2.pem')
+      key: fs.readFileSync('../public/localhost+2-key.pem'),
+      cert: fs.readFileSync('../public/localhost+2.pem')
     },
     logger: true 
   }
@@ -31,7 +31,7 @@ app.addHook('onRequest', async (request, reply) => {
 });
 
 app.get('/', async (request, reply) => {
-  reply.type('text/html').send(fs.readFileSync(path.join(import.meta.dirname, 'index.html')));
+  reply.type('text/html').send(fs.readFileSync(path.join(import.meta.dirname, '../public/index.html')));
 });
 
 app.post(config.endpoints.auth, (request, reply) => { 
