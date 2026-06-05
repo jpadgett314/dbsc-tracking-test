@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "fastify": "^5.8.5",
