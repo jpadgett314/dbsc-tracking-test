@@ -1,10 +1,10 @@
 /**
  * "serialized" (JSON-serializable) Device-Bound Session
- * @typedef SessionRecord
- * @param {string} id
- * @param {'inactive' | 'pending' | 'bound'} mode
- * @param {object} pubkey
- * @param {string | null} challenge
+ * @typedef {object} SessionRecord
+ * @property {string} id
+ * @property {'inactive' | 'pending' | 'bound'} mode
+ * @property {object} pubkey
+ * @property {string | null} challenge
  */
 
 /**

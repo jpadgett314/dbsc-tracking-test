@@ -1,80 +1,50 @@
-import fastifyPlugin from 'fastify-plugin';
 import { DBSCService } from '../DBSCService.js';
+import { adaptRequest } from './adaptRequest.js';
+import { adaptReply } from './adaptReply.js';
+import fastifyPlugin from 'fastify-plugin';
 
-const dbscPluginPre = async (options, service, request) => {
-  const inputs = {
-    route: request.routeOptions.url,
-    sessionId: request.cookies[options.cookie.name],
-    secureSessionResponse: request.headers['secure-session-response'],
-    secureSessionId: request.headers['sec-secure-session-id'],
-  };
-
-  request.dbscInputs = inputs;
-
-  request.session = await service.resolveSession(inputs);
-}
-
-const dbscPluginPost = async (options, service, request, reply) => {
-
-  const outputs = await service.dispatchHandler(request.dbscInputs, request.session);
-
-  if (outputs.secureSessionRegistration) {
-    reply.header('Secure-Session-Registration', outputs.secureSessionRegistration);
-  }
-
-  if (outputs.secureSessionChallenge) {
-    reply.header('Secure-Session-Challenge', outputs.secureSessionChallenge);
-  }
-
-  if (outputs.setCookie) {
-    reply.header('Set-Cookie', outputs.setCookie);
-  }
-
-  if (outputs.status) {
-    reply.code(outputs.status);
-  }
-
-  if (outputs.payload) {
-    return JSON.stringify(outputs.payload);
-  }
-}
-
-const dbscPlugin = fastifyPlugin(
+const dbsc = fastifyPlugin(
   (fastify, options) => {
     const service = new DBSCService(options);
 
-    fastify.decorateRequest('dbscInputs', null);
-
-    fastify.decorateRequest('session', null);
-
-    fastify.addHook('preHandler', async (request, reply) => {
+    const isApplicable = (request) => {
       const applicable = [
         options.endpoints.auth,
         options.endpoints.register,
         options.endpoints.refresh
-      ].includes(request.routeOptions.url);
+      ];
+      return applicable.includes(request.routeOptions.url);;
+    }
 
-      if (applicable) {
+    const prehook = async (request) => {
+      request.dbscInputs = adaptRequest(options, request);
+      request.session = await service.resolveSession(inputs);
+    }
+
+    const posthook = async (request, reply) => {
+      const outputs = await service.dispatchHandler(request.dbscInputs, request.session);
+      return adaptReply(outputs, reply);
+    }
+
+    fastify.decorateRequest('dbscInputs', null);
+    fastify.decorateRequest('session', null);
+    
+    fastify.addHook('preHandler', async (request, reply) => {
+      if (isApplicable(request)) {
         try {
-          await dbscPluginPre(options, service, request, reply)
+          await prehook(request, reply)
         } catch (e) {
-          console.error('Error occured in dbscPluginPre: ', e);
+          console.error('Error occured in preHandler: ', e);
         }
       }
     });
 
     fastify.addHook('onSend', async (request, reply) => {
-      const applicable = [
-        options.endpoints.auth,
-        options.endpoints.register,
-        options.endpoints.refresh
-      ].includes(request.routeOptions.url);
-
-      if (applicable) {
+      if (isApplicable(request)) {
         try {
-          return await dbscPluginPost(options, service, request, reply)
+          return await posthook(request, reply)
         } catch (e) {
-          console.error('Error occured in dbscPluginPost: ', e);
+          console.error('Error occured in onSend: ', e);
         }
       }
     });
@@ -82,4 +52,4 @@ const dbscPlugin = fastifyPlugin(
   { name: 'dbsc-plugin' }
 )
 
-export { dbscPlugin };
+export { dbsc };

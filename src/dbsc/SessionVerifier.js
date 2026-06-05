@@ -11,10 +11,10 @@ class SessionVerifier {
   /**
    * @param {object} jwt 
    * @param {string} challenge 
-   * @returns 
    */
   async verify(jwt, challenge) {
     let header;  
+
     try {
       header = decodeProtectedHeader(jwt);
     } catch {

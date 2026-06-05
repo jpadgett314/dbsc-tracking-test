@@ -3,7 +3,7 @@ import cookie from '@fastify/cookie';
 import config from './config.json' with { type: 'json' };
 import fs from 'fs';
 import path from 'path';
-import { dbscPlugin } from './dbsc/fastify-plugin/index.js';
+import { dbsc } from './dbsc/fastify-plugin/index.js';
 
 const app = fastify(
   { 
@@ -17,7 +17,7 @@ const app = fastify(
 
 await app.register(cookie);
 
-await app.register(dbscPlugin, config);
+await app.register(dbsc, config);
 
 // Enable CORS for testing
 app.addHook('onRequest', async (request, reply) => {
@@ -37,9 +37,11 @@ app.get('/', async (request, reply) => {
 app.post(config.endpoints.auth, (request, reply) => { 
   reply.send({ message: 'Logged in', sessionId: request.session.id });
 });
+
 app.post(config.endpoints.register, (request, reply) => { 
   reply.send();
 });
+
 app.post(config.endpoints.refresh, (request, reply) => { 
   reply.send();
 });
